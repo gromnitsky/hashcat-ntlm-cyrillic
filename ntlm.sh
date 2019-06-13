@@ -34,15 +34,16 @@ main() {
 	    xxd -p -r | iconv -f utf16le -t utf8 | xargs -0 echo
 	    ;;
 	show)
-	    $prog "$1" --show | while read -r line; do
+	    "$prog" "$1" --show | while read -r line; do
 		echo "$line" | awk -F: '{printf "%s:", $1}'
 		echo "$line" | sed -E 's/.+HEX\[(.+)\]/\1/' | $0 unhex
 	    done
 	    ;;
 	crack)
-	    $prog $device --status -O -m900 -a3 --hex-charset $pw_inc \
-		    -1 "`$0 mkdict "$1"`" \
-		    "$2" "`mask "$pw_len"`"
+	    `cygwinaze "$prog"` $device -O -m900 -a3 \
+			      --hex-charset $pw_inc \
+			      -1 "`$0 mkdict "$1"`" \
+			      "$2" "`mask "$pw_len"`"
 	    ;;
 	*)
 	    err 'unknown command'
@@ -50,7 +51,12 @@ main() {
 }
 
 mask() { yes '?1' | head -$(($1*2)) | tr -d "\n"; }
-hashcat() { which hashcat ./hashcat64 2>/dev/null | head -1 | grep .; }
+hashcat() { path hashcat ./hashcat64 | head -1 | grep .; }
+cygwinaze() {
+    uname | grep -q CYGWIN && path winpty && { echo "winpty $1"; return; }
+    echo "$1"
+}
 err() { echo "$0:" "$@" 1>&2; exit 1; }
+path() { which "$@" 2>/dev/null; }
 
 main "$@"
