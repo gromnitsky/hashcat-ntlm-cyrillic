@@ -30,13 +30,18 @@ main() {
 	mkcharset)
 	    echo -n "$1" | iconv -f utf8 -t utf16le | xxd -p -c1 | sort -u | tr -d '\n'
 	    ;;
-	unhex)
+	unhex)	       # FIXME: don't try to decode ascii
 	    xxd -p -r | iconv -f utf16le -t utf8 | xargs -0 echo
 	    ;;
 	show)
 	    "$prog" "$1" --show | while read -r line; do
 		echo "$line" | awk -F: '{printf "%s:", $1}'
-		echo "$line" | sed -E 's/.+HEX\[(.+)\]/\1/' | $0 unhex
+		val=`echo "$line" | sed -E 's/[^:]+://'`
+		if echo "$val" | grep -q '^$HEX\['; then
+		   echo "$val" | sed -E 's/.+\[(.+)\]/\1/' | $0 unhex
+		else
+		    echo "$val"
+		fi
 	    done
 	    ;;
 	crack)
