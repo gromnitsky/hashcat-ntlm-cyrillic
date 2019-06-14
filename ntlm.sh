@@ -27,8 +27,8 @@ main() {
 	hash)
 	    echo -n "$1" | iconv -f utf8 -t utf16le | openssl md4 | awk '{print $2}'
 	    ;;
-	mkdict)
-	    echo -n "$1" | iconv -f utf8 -t utf16le | xxd -p | tr -d '\n'
+	mkcharset)
+	    echo -n "$1" | iconv -f utf8 -t utf16le | xxd -p -c1 | sort -u | tr -d '\n'
 	    ;;
 	unhex)
 	    xxd -p -r | iconv -f utf16le -t utf8 | xargs -0 echo
@@ -40,9 +40,8 @@ main() {
 	    done
 	    ;;
 	crack)
-	    `cygwinaze "$prog"` $device -O -m900 -a3 \
-			      --hex-charset $pw_inc \
-			      -1 "`$0 mkdict "$1"`" \
+	    `cygwinaze "$prog"` $device -O -m900 -a3 --hex-charset $pw_inc \
+			      -1 "`$0 mkcharset "$1"`" \
 			      "$2" "`mask "$pw_len"`"
 	    ;;
 	*)
