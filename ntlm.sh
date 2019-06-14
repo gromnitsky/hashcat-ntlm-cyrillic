@@ -3,15 +3,11 @@
 
 main() {
     prog=`hashcat` || err 'no hashcat'
-    device=
     pw_len=6
     pw_inc=-i
 
-    while getopts "l:d:" opt; do
+    while getopts "l:" opt; do
 	case $opt in
-	    d)
-		device="-d $OPTARG"
-		;;
 	    l)
 		pw_len=$OPTARG
 		pw_inc=
@@ -45,12 +41,14 @@ main() {
 	    done
 	    ;;
 	crack)
-	    `cygwinaze "$prog"` $device -O -m900 -a3 --hex-charset $pw_inc \
-			      -1 "`$0 mkcharset "$1"`" \
-			      "$2" "`mask "$pw_len"`"
+	    cs=`if [ -r "$1" ]; then echo "$1"; else $0 mkcharset "$1"; fi`
+	    hash=$2
+	    shift 2
+	    `cygwinaze "$prog"` -O -m900 -a3 --hex-charset $pw_inc \
+				-1 "$cs" "$hash" "`mask "$pw_len"`" "$@"
 	    ;;
 	*)
-	    err 'unknown command'
+	    err 'what?'
     esac
 }
 
