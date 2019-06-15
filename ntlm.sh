@@ -15,16 +15,18 @@ main() {
 	    ?) exit 1
 	esac
     done
-    shift $((OPTIND -1))
+    shift $((OPTIND - 1))
 
     cmd=$1; shift
 
     case $cmd in
 	hash)
-	    echo -n "$1" | iconv -f utf8 -t utf16le | openssl md4 | awk '{print $2}'
+	    check_params "$1"
+	    echo -n "$1" | utf16le | openssl md4 | awk '{print $2}'
 	    ;;
 	mkcharset)
-	    echo -n "$1" | iconv -f utf8 -t utf16le | xxd -p -c1 | sort -u | tr -d '\n'
+	    check_params "$1"
+	    echo -n "$1" | utf16le | xxd -p -c1 | sort -u | tr -d '\n'
 	    ;;
 	unhex)
 	    input=`cat`
@@ -35,6 +37,7 @@ main() {
 	    fi
 	    ;;
 	show)
+	    check_params "$1"
 	    "$prog" "$1" --show | while read -r line; do
 		echo "$line" | awk -F: '{printf "%s:", $1}'
 		val=`echo "$line" | sed -E 's/[^:]+://'`
@@ -46,6 +49,7 @@ main() {
 	    done
 	    ;;
 	crack)
+	    check_params "$1" "$2"
 	    cs=`if [ -r "$1" ]; then echo "$1"; else $0 mkcharset "$1"; fi`
 	    hash=$2
 	    shift 2
@@ -66,5 +70,11 @@ cygwinaze() {
 err() { echo "$0:" "$@" 1>&2; exit 1; }
 path() { which "$@" 2>/dev/null; }
 unhex_aggressive() { xxd -p -r | iconv -f utf16le -t utf8; }
+utf16le() { iconv -f utf8 -t utf16le; }
+check_params() {
+    idx=0; for param in "$@"; do
+	idx=$((idx+1)); [ -z "$param" ] && err "missing param #$idx"
+    done
+}
 
 main "$@"
