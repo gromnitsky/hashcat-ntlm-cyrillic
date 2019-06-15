@@ -26,8 +26,13 @@ main() {
 	mkcharset)
 	    echo -n "$1" | iconv -f utf8 -t utf16le | xxd -p -c1 | sort -u | tr -d '\n'
 	    ;;
-	unhex)	       # FIXME: don't try to decode ascii
-	    xxd -p -r | iconv -f utf16le -t utf8 | xargs -0 echo
+	unhex)
+	    input=`cat`
+	    if echo "$input" | unhex_aggressive > /dev/null 2>&1; then
+		echo "$input" | unhex_aggressive | xargs echo
+	    else
+		echo "$input" | xxd -p -r | xargs echo # ascii
+	    fi
 	    ;;
 	show)
 	    "$prog" "$1" --show | while read -r line; do
@@ -60,5 +65,6 @@ cygwinaze() {
 }
 err() { echo "$0:" "$@" 1>&2; exit 1; }
 path() { which "$@" 2>/dev/null; }
+unhex_aggressive() { xxd -p -r | iconv -f utf16le -t utf8; }
 
 main "$@"
