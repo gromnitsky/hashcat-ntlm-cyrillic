@@ -8,10 +8,9 @@ main() {
 
     while getopts "l:" opt; do
 	case $opt in
-	    l)
-		pw_len=$OPTARG
-		pw_inc=
-		;;
+	    l) pw_len=$OPTARG
+	       pw_inc=
+	       ;;
 	    ?) exit 1
 	esac
     done
@@ -30,21 +29,20 @@ main() {
 	    ;;
 	unhex)
 	    input=`cat`
-	    if echo "$input" | unhex_aggressive > /dev/null 2>&1; then
-		echo "$input" | unhex_aggressive | xargs echo
-	    else
-		echo "$input" | xxd -p -r | xargs echo # ascii
-	    fi
+	    echo "$input" | unhex_aggressive > /dev/null 2>&1 && {
+		echo "$input" | unhex_aggressive | xargs echo; return
+	    }
+	    echo "$input" | xxd -p -r | xargs echo # ascii
 	    ;;
 	show)
 	    check_params "$1"
 	    "$prog" "$1" --show | while read -r line; do
 		echo "$line" | awk -F: '{printf "%s:", $1}'
-		val=`echo "$line" | sed -E 's/[^:]+://'`
-		if echo "$val" | grep -q '^$HEX\['; then
-		   echo "$val" | sed -E 's/.+\[(.+)\]/\1/' | $0 unhex
+		pw=`echo "$line" | sed -E 's/[^:]+://'`
+		if [ "${pw:0:5}" = "\$HEX[" ] ; then
+		   echo "${pw:5:-1}" | $0 unhex
 		else
-		    echo "$val"
+		    echo "$pw"
 		fi
 	    done
 	    ;;
