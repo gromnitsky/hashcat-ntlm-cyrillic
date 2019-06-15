@@ -2,6 +2,7 @@
 # shellcheck disable=2039,2230
 
 main() {
+    deps_missing=`check_deps openssl iconv xxd` || err "missing: $deps_missing"
     prog=`hashcat` || err 'no hashcat'
     pw_len=6
     pw_inc=-i
@@ -70,9 +71,10 @@ path() { which "$@" 2>/dev/null; }
 unhex_aggressive() { xxd -p -r | iconv -f utf16le -t utf8; }
 utf16le() { iconv -f utf8 -t utf16le; }
 check_params() {
-    idx=0; for param in "$@"; do
+    local idx=0; for param in "$@"; do
 	idx=$((idx+1)); [ -z "$param" ] && err "missing param #$idx"
     done
 }
+check_deps() { which "$@" 2>&1 | awk '/^which:/ {printf "%s ", $3; n++}; END {exit n}'; }
 
 main "$@"
